@@ -18,8 +18,7 @@ def search_string(query):
         soc.connect((HOST, port))
         soc.send(query.encode())
         res = soc.recv(1024).decode()
-        print(res)
-        if res == 'string found':
+        if res == 'STRING EXISTS':
             print(res)
         else:
             print(res)
