@@ -17,18 +17,15 @@ def find_path() -> str:
     return file_path
 
 
-def handle_client(client_socket: object):
+def handle_client(client_socket: object, file_path: str):
     '''
     handle_client: it handles the client clear text string
 
     args:
         client_socket: the object of the client socket
+        file_path: the path to the file
     '''
 
-    # Handle the client connection
-    # You can customize this function to define the desired behavior
-    # For example, you can receive and send data to the client
-    # Here's a simple echo server implementation as an example:
     while True:
         data = client_socket.recv(1024)
         if not data:
@@ -37,9 +34,15 @@ def handle_client(client_socket: object):
         # decode the received string from the client
         the_string = data.decode('utf-8')
 
-        # prints the received string
-        print(f'Received string {the_string}')
-        client_socket.send(data)
+        with open(file_path.lstrip('linuxpath=/').rstrip('\n'), 'r') as file:
+            for line in file:
+                if line.strip() == the_string:
+                    resp = b"STRING EXISTS"
+                    client_socket.send(resp)
+                    break
+            else:
+                resp = b'STRING DOES NOT EXIST'
+                client_socket.send(resp)
 
     # Close the client socket
     client_socket.close()
@@ -71,7 +74,9 @@ def start_server(host: str, port: int, file_path: str):
         print(f"New connection from {client_addr[0]} : {client_addr[1]}")
 
         # Start a new thread to handle the client
-        client_th = threading.Thread(target=handle_client, args=(client_sock,))
+        client_th = threading.Thread(
+                    target=handle_client,
+                    args=(client_sock, file_path,))
         client_th.start()
 
 
