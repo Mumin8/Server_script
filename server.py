@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 
+from configparser import ConfigParser
 import socket
 import threading
 
 
 def find_path() -> str:
+    '''
+    find_path: the function to find the path to the file
+
+
+    Return:
+            the path to the file
+    '''
 
     with open('config.config', 'r') as conf_file:
         for line in conf_file:
@@ -103,7 +111,8 @@ def start_server(host: str, port: int, file_path: str, reread_on_query: bool):
         client_th = threading.Thread(
                     target=handle_client,
                     args=(client_sock, file_path, reread_on_query))
-
+        
+        # start the thread
         client_th.start()
 
 
@@ -111,7 +120,10 @@ if __name__ == '__main__':
     # Specify the host and port to bind the server to
     HOST = '127.0.0.1'
     PORT = 8000
+
     REREAD_ON_QUERY = True
+
     # Start the server
     file_path = find_path()
+
     start_server(HOST, PORT, file_path, REREAD_ON_QUERY)
