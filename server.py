@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from concurrent.futures import ThreadPoolExecutor
 from configparser import ConfigParser
 import socket
 import threading
@@ -102,10 +103,15 @@ def start_server(host: str, port: int, file_path: str, reread_on_query: bool):
     server_socket.listen(1)
     print(f"Server listening on {host} : {port}")
 
+    executor = ThreadPoolExecutor(max_workers=10)
+
     while True:
         # Accept a client connection
         client_sock, client_addr = server_socket.accept()
         print(f"New connection from {client_addr[0]} : {client_addr[1]}")
+
+        executor.submit(handle_client,
+                        client_sock, file_path, reread_on_query)
 
         # Start a new thread to handle the client
         client_th = threading.Thread(
