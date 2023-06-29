@@ -46,8 +46,8 @@ def handle_client(
         if not data:
             break
 
-        # decode the received string from the client
-        the_string = data.decode('utf-8')
+        # decode the received string from the client and strip null characters
+        the_string = data.decode('utf-8').strip('\x00')
 
         if reread_on_query:
             # checks whether the query string is in the file and read ones
@@ -55,9 +55,9 @@ def handle_client(
                       'r') as file:
 
                 if the_string in file.read():
-                    resp = b"STRING EXISTS"
+                    resp = "STRING EXISTS\n"
                 else:
-                    resp = b"STRING DOES NOT EXIST"
+                    resp = "STRING DOES NOT EXIST\n"
         else:
             # goes through the file to look for a match
             with open(file_path.lstrip('linuxpath=/').rstrip('\n'),
@@ -65,12 +65,12 @@ def handle_client(
 
                 for line in file:
                     if line.strip() == the_string:
-                        resp = b"STRING EXISTS"
+                        resp = "STRING EXISTS\n"
                         break
                 else:
-                    resp = b'STRING DOES NOT EXIST'
+                    resp = 'STRING DOES NOT EXIST\n'
 
-        client_socket.send(resp)
+        client_socket.send(resp.encode('utf-8'))
 
     # Close the client socket
     client_socket.close()
@@ -111,7 +111,7 @@ def start_server(host: str, port: int, file_path: str, reread_on_query: bool):
         client_th = threading.Thread(
                     target=handle_client,
                     args=(client_sock, file_path, reread_on_query))
-        
+
         # start the thread
         client_th.start()
 
