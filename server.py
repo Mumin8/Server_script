@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
-from concurrent.futures import ThreadPoolExecutor
-from configparser import ConfigParser
+import configparser
+import os
 import socket
-import threading
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from logging import basicConfig, DEBUG, debug, info
+from threading import Thread
+from time import time
 
 
 def find_path() -> str:
@@ -13,17 +18,20 @@ def find_path() -> str:
 
     Return:
             the path to the file
-    '''
 
-    with open('config.config', 'r') as conf_file:
-        for line in conf_file:
-            if line.startswith('linuxpath='):
-                file_path = line
-                print(f' this is the path {file_path}')
-                break
-            else:
-                ValueError('path not in configuration file')
-    return file_path
+    '''
+    try:
+        config = configparser.ConfigParser()
+        config.read('config.config')
+
+        if 'DEFAULT' in config:
+            if 'linuxpath' in config['DEFAULT']:
+                file_path = config['DEFAULT']['linuxpath']
+                return file_path
+        raise ValueError('path not in configuration file')
+
+    except IOError:
+        raise ValueError('Error reading configuration file')
 
 
 def handle_client(
@@ -41,6 +49,9 @@ def handle_client(
         reread_on_query:
             the boolean to determine whether on not to read from the file again
     '''
+    start = time()
+    debug(f"Requesting IP: {client_socket.getpeername()[0]}")
+    debug(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     while True:
         data = client_socket.recv(1024)
@@ -52,9 +63,9 @@ def handle_client(
 
         if reread_on_query:
             # checks whether the query string is in the file and read ones
-            with open(file_path.lstrip('linuxpath=/').rstrip('\n'),
-                      'r') as file:
-
+            # file_content = read_file(file_path)
+            with open(file_path.lstrip(
+                    'linuxpath=/').rstrip('\n'), 'r') as file:
                 if the_string in file.read():
                     resp = "STRING EXISTS\n"
                 else:
@@ -71,7 +82,10 @@ def handle_client(
                 else:
                     resp = 'STRING DOES NOT EXIST\n'
 
+        debug(f"Search query: {the_string}")
         client_socket.send(resp.encode('utf-8'))
+        execution_time = time() - start
+        debug(f"Execution time: {execution_time*1000} miliseconds")
 
     # Close the client socket
     client_socket.close()
@@ -100,29 +114,69 @@ def start_server(host: str, port: int, file_path: str, reread_on_query: bool):
     server_socket.bind((host, port))
 
     # Listen for incoming connections
-    server_socket.listen(1)
-    print(f"Server listening on {host} : {port}")
+    server_socket.listen(5)
+    info(f"Server listening on {host} : {port}")
 
+    # create threadpoolexecutor with 10 max_workers
     executor = ThreadPoolExecutor(max_workers=10)
 
     while True:
         # Accept a client connection
         client_sock, client_addr = server_socket.accept()
-        print(f"New connection from {client_addr[0]} : {client_addr[1]}")
+        info(f"New connection from {client_addr[0]} : {client_addr[1]}")
 
+        # submit client handling task to the executor
         executor.submit(handle_client,
                         client_sock, file_path, reread_on_query)
 
         # Start a new thread to handle the client
-        client_th = threading.Thread(
-                    target=handle_client,
-                    args=(client_sock, file_path, reread_on_query))
+        # client_th = Thread(
+        # target=handle_client,
+        # args=(client_sock, file_path, reread_on_query))
 
         # start the thread
-        client_th.start()
+        # client_th.start()
 
 
 if __name__ == '__main__':
+
+    # Linux daemon/service installation instructions
+    if sys.platform.startswith('linux'):
+        if os.geteuid() != 0:
+            print("Please run the script as root to \
+                    install it as a Linux service.")
+            sys.exit(1)
+
+        service_name = 'myserver'
+        service_file = f'/etc/systemd/system/{service_name}.service'
+        script_path = os.path.abspath(__file__)
+
+        service_content = f"""
+                                [Unit]
+                                Description=My Server
+                                After=network.target
+
+                                [Service]
+                                ExecStart={sys.executable} {script_path}
+                                WorkingDirectory={os.path.dirname(script_path)}
+                                Restart=always
+
+                                [Install]
+                                WantedBy=multi-user.target
+                            """
+        try:
+            with open(service_file, 'w') as f:
+                f.write(service_content)
+                print(f"Created service file: {service_file}")
+        except Exception as e:
+            print(f"Failed to create service file: {str(e)}")
+            sys.exit(1)
+
+        os.system('systemctl daemon-reload')
+        os.system(f"systemctl enable {service_name}")
+        os.system(f"systemctl start {service_name}")
+        print(f"Installed and started the service: {service_name}")
+
     # Specify the host and port to bind the server to
     HOST = '127.0.0.1'
     PORT = 8000
@@ -131,5 +185,7 @@ if __name__ == '__main__':
 
     # Start the server
     file_path = find_path()
-
+    basicConfig(
+            level=DEBUG, format='%(asctime)s - %(levelname)s - %(message)s'
+            )
     start_server(HOST, PORT, file_path, REREAD_ON_QUERY)
