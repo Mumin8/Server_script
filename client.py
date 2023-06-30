@@ -1,8 +1,8 @@
 import socket
-
+import ssl
 
 HOST = '127.0.0.1'
-port = 8000 
+PORT = 8000
 
 
 def search_string(query):
@@ -13,15 +13,18 @@ def search_string(query):
         query: the query string for the search
     '''
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as soc:
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
 
-        soc.connect((HOST, port))
-        soc.send(query.encode())
-        res = soc.recv(1024).decode()
-        if res == 'STRING EXISTS':
-            print(res)
-        else:
-            print(res)
+    with socket.create_connection((HOST, PORT)) as soc:
+        with context.wrap_socket(soc, server_hostname=HOST) as secure_soc:
+            secure_soc.send(query.encode())
+            res = secure_soc.recv(1024).decode()
+            if res == 'STRING EXISTS':
+                print(res)
+            else:
+                print(res)
 
 
-search_string('3;0;1;28;0;7;5;0;')
+search_string('17;0;1;26;0;19;5;0;')
