@@ -21,21 +21,17 @@ def find_path() -> str:
             the path to the file
 
     '''
-    try:
-        # configparser object
-        config = configparser.ConfigParser()
-        config.read('config.config')
+    # configparser object
+    config = configparser.ConfigParser()
+    config.read('config.config')
 
-        if 'DEFAULT' in config:
-            if 'linuxpath' in config['DEFAULT']:
-                # obtain the exact path from the configuration file
-                file_path = config['DEFAULT']['linuxpath']
-                return file_path
-        raise ValueError('path not in configuration file')
-
-    except IOError:
-        raise ValueError('Error reading configuration file')
-
+    if 'DEFAULT' in config:
+        if 'linuxpath' in config['DEFAULT']:
+            # obtain the exact path from the configuration file
+            print(f'the file path { config["DEFAULT"]}')
+            file_path = config['DEFAULT']['linuxpath']
+            return file_path
+    raise ValueError('path not in configuration file')
 
 def handle_client(
         client_socket: object, file_path: str, reread_on_query: bool):
@@ -154,7 +150,7 @@ def start_server(host: str, port: int, file_path: str,
 
 if __name__ == '__main__':
 
-    # Linux daemon/service installation instructions
+    # Linux service installation instructions
     if sys.platform.startswith('linux'):
         if os.geteuid() != 0:
             info("Please run the script as root to \
