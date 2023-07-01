@@ -115,10 +115,6 @@ def start_server(host: str, port: int, file_path: str,
     # Create a socket object
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    # Bind the socket to a specific host and port
-    server_socket.bind((host, port))
-    # Listen for incoming connections
-    server_socket.listen(5)
 
     if use_ssl:
         # Create SSL context
@@ -127,7 +123,12 @@ def start_server(host: str, port: int, file_path: str,
         context.load_cert_chain(certfile='server.crt', keyfile='server.key')
         # Wrap the socket with SSL/TLS
         server_socket = context.wrap_socket(server_socket, server_side=True)
+    
 
+    # Bind the socket to a specific host and port
+    server_socket.bind((host, port))
+    # Listen for incoming connections
+    server_socket.listen(5)
     info(f"Server listening on {host} : {port}")
 
     # create threadpoolexecutor with 10 max_workers
@@ -195,6 +196,8 @@ if __name__ == '__main__':
     PORT = 8000
 
     REREAD_ON_QUERY = True
+
+    # you can easily come here and turn ssl on and off
     USE_SSL = True
 
     # Start the server
