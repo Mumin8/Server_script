@@ -13,7 +13,7 @@ def search_string(query):
         query: the query string for the search
     '''
 
-    context = ssl.create_default_context()
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
 
