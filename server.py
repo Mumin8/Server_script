@@ -28,7 +28,6 @@ def find_path() -> str:
     if 'DEFAULT' in config:
         if 'linuxpath' in config['DEFAULT']:
             # obtain the exact path from the configuration file
-            print(f'the file path { config["DEFAULT"]}')
             file_path = config['DEFAULT']['linuxpath']
             return file_path
     raise ValueError('path not in configuration file')
