@@ -33,6 +33,7 @@ def find_path() -> str:
             return file_path
     raise ValueError('path not in configuration file')
 
+
 def handle_client(
         client_socket: object, file_path: str, reread_on_query: bool):
     '''
@@ -49,9 +50,12 @@ def handle_client(
             the boolean to determine whether on not to read from the file again
     '''
     start = time()
+
+    # log information
     debug(f"Requesting IP: {client_socket.getpeername()[0]}")
     debug(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
+    # process the data from the client
     while True:
         data = client_socket.recv(1024)
         if not data:
@@ -81,8 +85,11 @@ def handle_client(
                 else:
                     resp = 'STRING DOES NOT EXIST\n'
 
+        # the search query log information
         debug(f"Search query: {the_string}")
         client_socket.send(resp.encode('utf-8'))
+
+        # the execution time of the program
         execution_time = time() - start
         debug(f"Execution time: {execution_time*1000} miliseconds")
 
@@ -91,38 +98,47 @@ def handle_client(
 
 
 def start_server(host: str, port: int, file_path: str,
-                 reread_on_query: bool, use_ssl: bool
+                 reread_on_query: bool, openssl: dict
                  ):
     '''
     start_server: binds a port and responds to unlimited amount of
-    concurrent connections
+                  concurrent connections
 
     args:
         host:
             a string representing the host or ip address of the server
+
         port:
             an integer representing the port number of the server to bind
+
         file_path:
                 the path to the file to read from
+
         reread_on_query:
                 boolean to check whether to reread a file or not
+
+        openssl_dict:
+                    the configuration file to configure the ssl
+
         '''
 
     # Create a socket object
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-
-    if use_ssl:
+    if openssl['ssl']:
         # Create SSL context
         context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+
         # Load server-side certificate and key
-        context.load_cert_chain(certfile='server.crt', keyfile='server.key')
+        context.load_cert_chain(certfile=openssl['certfile'],
+                                keyfile=openssl['keyfile'])
+
         # Wrap the socket with SSL/TLS
         server_socket = context.wrap_socket(server_socket, server_side=True)
-    
 
     # Bind the socket to a specific host and port
     server_socket.bind((host, port))
+
     # Listen for incoming connections
     server_socket.listen(5)
     info(f"Server listening on {host} : {port}")
@@ -191,11 +207,15 @@ if __name__ == '__main__':
     HOST = '127.0.0.1'
     PORT = 8000
 
+    # specify the reread_on_query
     REREAD_ON_QUERY = True
 
     # you can easily come here and turn ssl on and off
-    USE_SSL = True
-
+    USE_SSL = {
+            'ssl': True,
+            'certfile': 'server.crt',
+            'keyfile': 'server.key'
+            } 
     # Start the server
     file_path = find_path()
     basicConfig(
