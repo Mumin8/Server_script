@@ -215,7 +215,7 @@ if __name__ == '__main__':
             'ssl': True,
             'certfile': 'server.crt',
             'keyfile': 'server.key'
-            } 
+            }
     # Start the server
     file_path = find_path()
     basicConfig(
