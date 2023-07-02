@@ -10,32 +10,33 @@ import socket
 from server import start_server
 from client import search_string
 
-PORT = 8000 
+PORT = 8000
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname)
 stop_server_flag = threading.Event()
 
+
 def test_find_path():
+
     '''
     test_find_path: this handles the find_path cases
     '''
 
     config = configparser.ConfigParser()
     path = server.find_path()
-   
+
     assert isinstance(path, str), " the path should be a string"
 
     assert path is not None and path != "", "The path must exist"
 
-    assert not "DEFAULT" in config or \
-            not 'linuxpath' in config['DEFAULT'], "when path \
-            doesnt exist on there is no configuration file"
+    assert "DEFAULT" not in config or 'linuxpath' not in config['DEFAULT']
+
 
 def test_start_server():
-    ''' 
+    '''
     test_start_server: this starts the server
     '''
-    FILE_PATH = server.find_path() 
+    FILE_PATH = server.find_path()
     REREAD_ON_QUERY = True
     USE_SSL = {
             'ssl': True,
@@ -44,7 +45,9 @@ def test_start_server():
             }
 
     # Start the server in a separate thread
-    server_thread = threading.Thread(target=start_server, args=(HOST, PORT, FILE_PATH, REREAD_ON_QUERY, USE_SSL))
+    server_thread = threading.Thread(
+            target=start_server,
+            args=(HOST, PORT, FILE_PATH, REREAD_ON_QUERY, USE_SSL))
     server_thread.start()
 
     # Wait for the server to start
@@ -52,8 +55,6 @@ def test_start_server():
 
     # Stop the server by setting the stop_server_flag
     stop_server_flag.set()
-
-
 
     # Stop the server
     server_thread.join(timeout=1)
