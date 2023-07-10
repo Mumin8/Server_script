@@ -7,12 +7,12 @@ import threading
 import time
 import requests
 import socket
-from server import start_server
+from server import start_server, server_config, find_path
 from client import search_string
 
-PORT = 8000
-hostname = socket.gethostname()
-HOST = socket.gethostbyname(hostname)
+# PORT = 8000
+# hostname = socket.gethostname()
+# HOST = socket.gethostbyname(hostname)
 stop_server_flag = threading.Event()
 
 
@@ -35,7 +35,7 @@ def test_find_path():
 def test_start_server():
     '''
     test_start_server: this starts the server
-    '''
+    
     FILE_PATH = server.find_path()
     REREAD_ON_QUERY = True
     USE_SSL = {
@@ -43,11 +43,13 @@ def test_start_server():
             'certfile': 'server.crt',
             'keyfile': 'server.key'
             }
-
+    '''
+    FILE_PATH = find_path()
+    server = server_config()
     # Start the server in a separate thread
     server_thread = threading.Thread(
             target=start_server,
-            args=(HOST, PORT, FILE_PATH, REREAD_ON_QUERY, USE_SSL))
+            args=(server['host'], server['port'], FILE_PATH, server['REREAD_ON_QUERY'], server['USE_SSL']))
     server_thread.start()
 
     # Wait for the server to start
