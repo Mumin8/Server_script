@@ -163,61 +163,50 @@ def start_server(host: str, port: int, file_path: str,
         # client_th.start()
 
 
+def find_config_path():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(script_dir, 'config.ini')
+
+
+def server_config() -> dict:
+    '''
+    server_config: the function to setup the configuration
+                    of the server
+
+    Return:
+        returns a diction of the necessary configurations
+    '''
+
+    config_path = find_config_path()
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    server_section = config['Server']
+    ssl_section = config['SSL']
+    reread_section = config['REREAD']
+    server_config = {
+            'host': server_section.get('host'),
+            'port': server_section.getint('port'),
+            'REREAD_ON_QUERY': reread_section.getboolean('REREAD_ON_QUERY'),
+            'USE_SSL': {
+                'ssl': ssl_section.getboolean('ssl_status'),
+                'certfile': ssl_section.get('certfile'),
+                'keyfile': ssl_section.get('keyfile')
+                }
+
+            }
+
+    return server_config
+
+
 if __name__ == '__main__':
 
-    # Linux service installation instructions
-    if sys.platform.startswith('linux'):
-        if os.geteuid() != 0:
-            info("Please run the script as root to \
-                    install it as a Linux service.")
-            sys.exit(1)
+    # Read the server configuration
+    server = server_config()
 
-        service_name = 'myserver'
-        service_file = f'/etc/systemd/system/{service_name}.service'
-        script_path = os.path.abspath(__file__)
-
-        service_content = f"""
-                                [Unit]
-                                Description=My Server
-                                After=network.target
-
-                                [Service]
-                                ExecStart={sys.executable} {script_path}
-                                WorkingDirectory={os.path.dirname(script_path)}
-                                Restart=always
-
-                                [Install]
-                                WantedBy=multi-user.target
-                            """
-        try:
-            with open(service_file, 'w') as f:
-                f.write(service_content)
-                info(f"Created service file: {service_file}")
-        except Exception as e:
-            info(f"Failed to create service file: {str(e)}")
-            sys.exit(1)
-
-        os.system('systemctl daemon-reload')
-        os.system(f"systemctl enable {service_name}")
-        os.system(f"systemctl start {service_name}")
-        info(f"Installed and started the service: {service_name}")
-
-    # Specify the host and port to bind the server to
-    HOST = '127.0.0.1'
-    PORT = 8000
-
-    # specify the reread_on_query
-    REREAD_ON_QUERY = True
-
-    # you can easily come here and turn ssl on and off
-    USE_SSL = {
-            'ssl': True,
-            'certfile': 'server.crt',
-            'keyfile': 'server.key'
-            }
-    # Start the server
     file_path = find_path()
     basicConfig(
             level=DEBUG, format='%(asctime)s - %(levelname)s - %(message)s'
             )
-    start_server(HOST, PORT, file_path, REREAD_ON_QUERY, USE_SSL)
+    # start the server
+    start_server(server['host'], server['port'],
+                 file_path, server['REREAD_ON_QUERY'], server['USE_SSL'])
