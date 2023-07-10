@@ -4,6 +4,11 @@ import time
 import argparse
 from server import server_config
 
+# Get the server configuration
+server = server_config()
+HOST = server["host"]
+PORT = server["port"]
+
 
 def search_string(query_string: str) -> str:
     '''
@@ -68,11 +73,6 @@ if __name__ == "__main__":
 
     # Access the query string
     query = args.query
-
-    # Get the server configuration
-    server = server_config()
-    HOST = server["host"]
-    PORT = server["port"]
 
     # Perform the search
     search_string(query)
