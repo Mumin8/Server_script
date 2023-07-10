@@ -30,4 +30,4 @@ Run the following command to execute the client code:
 Replace "your_query_string" with the string you want to search for in the server's database.
 
 ### Example: python client.py --query "19;0;21;16;0;17;3;0;"
-# /c/Users/hp/Pictures/op.PNG
+![Screenshot](https://github.com/Mumin8/Server_script/blob/main/op.PNG)
