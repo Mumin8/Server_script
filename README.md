@@ -29,5 +29,19 @@ Run the following command to execute the client code:
 
 Replace "your_query_string" with the string you want to search for in the server's database.
 
+The code will establish a secure connection with the server, send the query string, and receive a response.
+The response will be printed on the console as shown below assuming the query string is valid.
+
 ### Example: python client.py --query "19;0;21;16;0;17;3;0;"
 ![Screenshot](https://github.com/Mumin8/Server_script/blob/main/op.PNG)
+
+## Understanding the Code
+The search_string function is responsible for establishing a secure connection with the server, sending the query string, and receiving the response.
+
+The code uses SSL/TLS encryption to ensure secure communication between the client and the server.
+
+The server_config function retrieves the server configuration from the server module.
+
+The code measures the execution time for different file sizes by repeating the search process for each size.
+
+
